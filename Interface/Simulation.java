@@ -22,7 +22,8 @@ public class Simulation extends JPanel implements ActionListener {
 	public static double time = 0;
 	public static double TIME_INTERVAL = 0.001;
 	Color ballColor = Color.BLACK;
-	double height = Menu.initialHeight;
+	double offset = 100;
+	double height = Menu.initialHeight/2 - offset;
 	double xPos = Menu.initialxPos;
 	double yVelocity = Menu.yVelocity;
 	double xVelocity = Menu.xVelocity;
@@ -39,7 +40,7 @@ public class Simulation extends JPanel implements ActionListener {
 				Simulation co = new Simulation();
 				frame.add(co, BorderLayout.CENTER);
 				frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-				frame.setSize(Menu.WIDTH, Menu.HEIGHT);
+				frame.setSize(Menu.WIDTH/2, Menu.HEIGHT/2);
 				frame.setVisible(true);
 			}
 		});
@@ -63,7 +64,7 @@ public class Simulation extends JPanel implements ActionListener {
 		xPos += xVelocity * TIME_INTERVAL;
 		yVelocity += -G * time;
 		time += TIME_INTERVAL;
-		if (height >= Menu.HEIGHT) {
+		if (height >= Menu.HEIGHT/2 - offset) {
 			yVelocity = 0;
 			xVelocity = 0;
 			System.out.println(xPos);

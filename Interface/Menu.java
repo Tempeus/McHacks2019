@@ -25,7 +25,6 @@ public class Menu implements Runnable, ActionListener {
 	public static final int WIDTH = (int) screenSize.getWidth();
 	public static final int HEIGHT = (int) screenSize.getHeight();
 	public static final double SCALE = 1000; //for meters per second
-	public static boolean sendData = false;
 
 //	Constructor for Menu
 	public static JFrame f = new JFrame("The Thrower");
@@ -128,7 +127,7 @@ public class Menu implements Runnable, ActionListener {
 
 			public void warning() {
 				if (!number(velocityText.getText())) {
-					System.out.println("This ain't a number man");
+					ErrorPopup.main(null);
 				}
 			}
 		});
@@ -140,57 +139,7 @@ public class Menu implements Runnable, ActionListener {
 		labelDisplay();
 		setListeners();
 		
-		Thread thread = new Thread(){
-			public void run() {
-				try {
-					Thread.sleep(100);
-				} catch (Exception e) {}
-				
-				// Sending data to the arduino
-				if (sendData) {
-					//reads input stream FROM java TO arduino
-					InputStreamReader is = new InputStreamReader(port.getInputStream());
-					
-					//Turning data to send into byte data for easier and more standardized sending.
-					byte[] data = new byte[256];
-					byte[] angleData = angle().getBytes();
-					byte[] velData = velocity().getBytes();
-					
-					try {
-						// Checks if the angleData and velData arrays aren't too big for the data array
-						if ((angleData.length > data.length / 2) || (velData.length > data.length / 2)) {
-							throw new Exception();
-						}
-						
-						for (int i = 0; i < angleData.length; i++) {
-							data[i] = angleData[i];
-						}
-						
-						for (int i = 0; i < velData.length; i++) {							
-							data[data.length/2 + i] = velData[i];
-						} 
-						
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-					
-					try {	
-						// streams data FROM java TO arduino
-						OutputStream os = port.getOutputStream();
-						
-						// writes data directly onto the output stream to the arduino
-						os.write(data);
-						
-						// waits for writing to be done
-						os.flush();
-					
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					}	
-				}	
-			}
-		};
-		thread.start();
+
 		
 	}
 
@@ -270,6 +219,9 @@ public class Menu implements Runnable, ActionListener {
 //	Reset the arm to the default position
 	private void reset() {
 //		TODO: Reset the arms position, should also pause the program?
+		angleText.setText("0");
+		velocityText.setText("0");
+		sendData();
 		System.out.println("Resetting arm!");
 	}
 
@@ -336,11 +288,6 @@ public class Menu implements Runnable, ActionListener {
 		north.add(inputPanel);
 	}
 	
-//	Pop up correction menu
-	private void popup() {
-		
-	}
-	
 //	Getters for the angle
 	public String angle() {
 		return angleText.getText();
@@ -350,4 +297,58 @@ public class Menu implements Runnable, ActionListener {
 	public String velocity() {
 		return velocityText.getText();
 	}
+	
+	public void sendData() {
+		Thread thread = new Thread(){
+			public void run() {
+				try {
+					Thread.sleep(100);
+				} catch (Exception e) {}
+				
+				// Sending data to the arduino
+				//reads input stream FROM java TO arduino
+				InputStreamReader is = new InputStreamReader(port.getInputStream());
+				
+				//Turning data to send into byte data for easier and more standardized sending.
+				byte[] data = new byte[256];
+				byte[] angleData = angle().getBytes();
+				byte[] velData = velocity().getBytes();
+				
+				try {
+					// Checks if the angleData and velData arrays aren't too big for the data array
+					if ((angleData.length > data.length / 2) || (velData.length > data.length / 2)) {
+						throw new Exception();
+					}
+					
+					for (int i = 0; i < angleData.length; i++) {
+						data[i] = angleData[i];
+					}
+					
+					for (int i = 0; i < velData.length; i++) {							
+						data[data.length/2 + i] = velData[i];
+					} 
+					
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				
+				try {	
+					// streams data FROM java TO arduino
+					OutputStream os = port.getOutputStream();
+					
+					// writes data directly onto the output stream to the arduino
+					os.write(data);
+					
+					// waits for writing to be done
+					os.flush();
+				
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+			
+			}
+		};
+		thread.start();
+	}
+	
 }

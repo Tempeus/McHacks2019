@@ -32,6 +32,11 @@ const int DIS = 13; //SETTING TO PIN 13
 
 //ENDSTOP --> DETECTS WHEN THE ARM IS PRESSING AGAINST THE SWITCH AT THE ORIGIN
 const int ENDSTOP = 1; //SETTING TO PIN 1
+//state received by endstop
+int state ;
+
+//LED --> Useful pin for diagnostics.
+const int LED = 2;
 
 //enumerating all the modes
 enum modes {
@@ -49,12 +54,17 @@ void setup() {
   pinMode(DIR, OUTPUT);
   pinMode(DIS, OUTPUT);
   pinMode(ENDSTOP, INPUT);
+  pinMode(LED, OUTPUT);
 }
 
 void loop() {
 
   switch (mode) {
     case STANDBY: //the arm will not perform any actions until it is given an input from the user
+
+      //DEBUGGING LED
+      digitalWrite(LED, HIGH);
+      
       digitalWrite(DIS, LOW); //turning the motor off
 
       //Reads input stream FROM java TO ardiono to a char array
@@ -76,21 +86,32 @@ void loop() {
         //convert the angle and velocity strings into proper doubles
         angle = atof(sAngle);
         velocity = atof(sVel);
+
+        //If the angle and velocity are zero, then it's a reset command.
+        if( angle == 0.0 && velocity == 0.0 ){
+          mode = RESET;
+        }
+        else{
+          mode = THROW;
+        }
         
       }
       break;
       
     case RESET: //the arm will reset to it's original location
-      int state = digitalRead(ENDSTOP); // 1 if the voltage at the pin is HIGH or when pressed, return 0 if the voltage at the pin is LOW when not pressed
+      //DEBUGGING LED
+      digitalWrite(LED, LOW);
+      state = digitalRead(ENDSTOP); // 1 if the voltage at the pin is HIGH or when pressed, return 0 if the voltage at the pin is LOW when not pressed
       if (state = 1){
         mode = STANDBY;
         break;
       }
       stepBackward();
-      //TODO
       break;
       
     case THROW: //the motor will turn on, making the arm launch the projectile
+      //DEBUGGING LED
+      digitalWrite(LED, LOW);
       if (stepPosition >= stepPosTarget){
         mode = STANDBY;
         break;   
@@ -109,7 +130,7 @@ void stepForward(){
   delayMicroseconds(microseconds_per_step); //max delay for rotation
   digitalWrite(PUL, LOW); //stop the voltage supply to the pulse
   delayMicroseconds(microseconds_per_step); //max delay for rotation
-  stepPosition ++;
+  stepPosition++;
 }
 
 
@@ -120,7 +141,7 @@ void stepBackward(){
   delayMicroseconds(microseconds_per_step); //max delay for rotation
   digitalWrite(PUL, LOW); //stop the voltage supply to the pulse
   delayMicroseconds(microseconds_per_step); //max delay for rotation
-  stepPosition --;
+  stepPosition--;
 }
 
 double getDelayPerStep(double angularVel, double finalAngle) {
