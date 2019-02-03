@@ -8,6 +8,11 @@ import java.awt.Canvas;
 import java.awt.Graphics;
 import java.awt.Toolkit;
 
+import com.fazecast.jSerialComm.*;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -126,12 +131,79 @@ public class Menu implements Runnable, ActionListener {
 
 		labelDisplay();
 		setListeners();
-
+		
+		Thread thread = new Thread(){
+			public void run() {
+				try {
+					Thread.sleep(100);
+				} catch (Exception e) {}
+				
+				// Sending data to the arduino
+				if (sendData) {
+					//reads input stream FROM java TO arduino
+					InputStreamReader is = new InputStreamReader(port.getInputStream());
+					
+					//Turning data to send into byte data for easier and more standardized sending.
+					byte[] data = new byte[256];
+					byte[] angleData = angle().getBytes();
+					byte[] velData = velocity().getBytes();
+					
+					try {
+						// Checks if the angleData and velData arrays aren't too big for the data array
+						if ((angleData.length > data.length / 2) || (velData.length > data.length / 2)) {
+							throw new Exception();
+						}
+						
+						for (int i = 0; i < angleData.length; i++) {
+							data[i] = angleData[i];
+						}
+						
+						for (int i = 0; i < velData.length; i++) {							
+							data[data.length/2 + i] = velData[i];
+						} 
+						
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+					
+					try {	
+						// streams data FROM java TO arduino
+						OutputStream os = port.getOutputStream();
+						
+						// writes data directly onto the output stream to the arduino
+						os.write(data);
+						
+						// waits for writing to be done
+						os.flush();
+					
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}	
+				}	
+			}
+		};
+		thread.start();
+		
 	}
 
 	public static void main(String[] args) {
 		Menu myMenu = new Menu();
 		SwingUtilities.invokeLater(myMenu);
+		
+		// Checks if connection has opened to the port
+				if (port.openPort()) {
+					System.out.println("Success");
+				} else {
+					System.out.println("Failure");
+				}
+				port.setComPortTimeouts(SerialPort.TIMEOUT_READ_SEMI_BLOCKING, 0, 0);
+
+				// waits 4 seconds for arduino to boot
+				try {
+					Thread.sleep(4000);
+				} catch (InterruptedException e2) {
+					e2.printStackTrace();
+				}
 	}
 
 //	Perform an action when a button is pressed

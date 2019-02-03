@@ -137,6 +137,27 @@ public class Menu implements Runnable, ActionListener {
 	public static void main(String[] args) {
 		Menu myMenu = new Menu();
 		SwingUtilities.invokeLater(myMenu);
+		
+		// gets all the communication ports that are connected to the computer
+		SerialPort ports[] = SerialPort.getCommPorts();
+		
+		// assigns COM3 port to local serial port
+		SerialPort port = ports[0];
+		
+		// Checks if connection has opened to the port
+		if(port.openPort()) {
+			System.out.println("Success");
+		} else {
+			System.out.println("Failure");
+		}
+		port.setComPortTimeouts(SerialPort.TIMEOUT_READ_SEMI_BLOCKING, 0, 0);
+		// waits 4 seconds for arduino to boot
+		try {
+			Thread.sleep(4000);
+		} catch (InterruptedException e2) {
+			e2.printStackTrace();
+		}
+		
 	}
 
 //	Perform an action when a button is pressed
