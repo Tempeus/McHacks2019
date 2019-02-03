@@ -25,6 +25,7 @@ public class Menu implements Runnable, ActionListener {
 	public static final int WIDTH = (int) screenSize.getWidth();
 	public static final int HEIGHT = (int) screenSize.getHeight();
 	public static final double SCALE = 1000; //for meters per second
+	public static boolean sendData = false;
 
 //	Constructor for Menu
 	public static JFrame f = new JFrame("The Thrower");
@@ -50,6 +51,13 @@ public class Menu implements Runnable, ActionListener {
 	public static double xVelocity = 1 * SCALE;
 	public static double yVelocity = 1 * SCALE;
 	private static double length = 0.3 * SCALE;
+	
+// 	Serial Port config
+	// gets all the communication ports that are connected to the computer
+	static SerialPort ports[] = SerialPort.getCommPorts();
+
+	// assigns COM3 port to local serial port
+	static SerialPort port = ports[0];
 	
 	@Override
 	public void run() {
