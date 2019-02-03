@@ -1,8 +1,11 @@
 const double STEPS_PER_ROTATION = 3200.0;
 const double DEGREES_PER_ROTATION = 360.0;
-const double MILLIMETER_PER_DEGREE = 2.0*3.1415926535899*300.0 / 360.0
+const double MILLIMETER_PER_DEGREE = 2.0*3.1415926535899*300.0 / 360.0;
 const double STEPS_PER_DEGREE = STEPS_PER_ROTATION / DEGREES_PER_ROTATION;
 const double DEGREE_PER_STEPS = DEGREES_PER_ROTATION / STEPS_PER_ROTATION;
+char inputBuffer[256];
+double angle;
+double velocity;
 
 //Delay for the max speed
 int microseconds_per_step = 300;
@@ -52,7 +55,29 @@ void loop() {
 
   switch (mode) {
     case STANDBY: //the arm will not perform any actions until it is given an input from the user
-      digitalWrite(DIS, HIGH); //turning the motor off
+      digitalWrite(DIS, LOW); //turning the motor off
+
+      //Reads input stream FROM java TO ardiono to a char array
+      Serial.readBytes(inputBuffer, 256);
+      Serial.flush();
+
+      if (sizeof(inputBuffer) != 0) {
+        char sAngle[128];
+        char sVel[128];
+
+        //Assign sAngle and sVel accordingly
+        for (int i = 0; i < 128; i++) {
+          sAngle[i] = inputBuffer[i];
+        }
+        for (int i = 0; i < 128; i++) {
+          sAngle[128 + i] = inputBuffer[128 + i];
+        }
+
+        //convert the angle and velocity strings into proper doubles
+        angle = atof(sAngle);
+        velocity = atof(sVel);
+        
+      }
       break;
       
     case RESET: //the arm will reset to it's original location
