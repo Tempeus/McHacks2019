@@ -36,8 +36,8 @@ public class Menu implements Runnable, ActionListener {
 	private static JButton quitButton = new JButton();
 	private static JLabel titleLabel = new JLabel();
 //	private static JTextField distanceText = new JTextField("0");
-	private static JTextField angleText = new JTextField("40");
-	private static JTextField velocityText = new JTextField("10");
+	private static JTextField angleText = new JTextField("0");
+	private static JTextField velocityText = new JTextField("0");
 	JLabel angleLabel = new JLabel("Angle");
 	JLabel velocityLabel = new JLabel("Velocity");
 	JPanel inputPanel = new JPanel();
@@ -153,14 +153,14 @@ public class Menu implements Runnable, ActionListener {
 				} else {
 					System.out.println("Failure");
 				}
-				port.setComPortTimeouts(SerialPort.TIMEOUT_NONBLOCKING, 5000, 5000);
+				port.setComPortTimeouts(SerialPort.TIMEOUT_READ_SEMI_BLOCKING, 0, 0);
 
 				// waits 4 seconds for arduino to boot
-//				try {
-//					Thread.sleep(4000);
-//				} catch (InterruptedException e2) {
-//					e2.printStackTrace();
-//				}
+				try {
+					Thread.sleep(4000);
+				} catch (InterruptedException e2) {
+					e2.printStackTrace();
+				}
 	}
 
 //	Perform an action when a button is pressed
@@ -299,51 +299,56 @@ public class Menu implements Runnable, ActionListener {
 	}
 	
 	public void sendData() {
-//		try {
-//			Thread.sleep(100);
-//		} catch (Exception e) {}
-		
-		// Sending data to the arduino
-		//reads input stream FROM java TO arduino
-		//InputStreamReader is = new InputStreamReader(port.getInputStream());
-		
-		//Turning data to send into byte data for easier and more standardized sending.
-		byte[] data = new byte[256];
-		byte[] angleData = angle().getBytes();
-		byte[] velData = velocity().getBytes();
-		
-		try {
-			// Checks if the angleData and velData arrays aren't too big for the data array
-			if ((angleData.length > data.length / 2) || (velData.length > data.length / 2)) {
-				throw new Exception();
+		Thread thread = new Thread(){
+			public void run() {
+				try {
+					Thread.sleep(100);
+				} catch (Exception e) {}
+				
+				// Sending data to the arduino
+				//reads input stream FROM java TO arduino
+				InputStreamReader is = new InputStreamReader(port.getInputStream());
+				
+				//Turning data to send into byte data for easier and more standardized sending.
+				byte[] data = new byte[256];
+				byte[] angleData = angle().getBytes();
+				byte[] velData = velocity().getBytes();
+				
+				try {
+					// Checks if the angleData and velData arrays aren't too big for the data array
+					if ((angleData.length > data.length / 2) || (velData.length > data.length / 2)) {
+						throw new Exception();
+					}
+					
+					for (int i = 0; i < angleData.length; i++) {
+						data[i] = angleData[i];
+					}
+					
+					for (int i = 0; i < velData.length; i++) {							
+						data[data.length/2 + i] = velData[i];
+					} 
+					
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				
+				try {	
+					// streams data FROM java TO arduino
+					OutputStream os = port.getOutputStream();
+					
+					// writes data directly onto the output stream to the arduino
+					os.write(data);
+					
+					// waits for writing to be done
+					os.flush();
+				
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+			
 			}
-			
-			for (int i = 0; i < angleData.length; i++) {
-				data[i] = angleData[i];
-			}
-			
-			for (int i = 0; i < velData.length; i++) {							
-				data[data.length/2 + i] = velData[i];
-			} 
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		
-		try {	
-			// streams data FROM java TO arduino
-			OutputStream os = port.getOutputStream();
-			
-			// writes data directly onto the output stream to the arduino
-			os.write(data);
-			
-			// waits for writing to be done
-			os.flush();
-		
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}
-	
+		};
+		thread.start();
 	}
 	
 }
