@@ -70,7 +70,7 @@ void loop() {
           sAngle[i] = inputBuffer[i];
         }
         for (int i = 0; i < 128; i++) {
-          sAngle[128 + i] = inputBuffer[128 + i];
+          sVel[i] = inputBuffer[128 + i];
         }
 
         //convert the angle and velocity strings into proper doubles
